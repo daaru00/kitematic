@@ -26,7 +26,9 @@ var ContainerSettingsPorts = React.createClass({
     return {
       ports: ports,
       initialPorts: initialPorts,
-      hostname: this.props.container.Config.Hostname
+      hostname: this.props.container.Config.Hostname,
+      hostnameError: null,
+      isHostnameValid: true
     };
   },
   handleViewLink: function (url) {
@@ -169,9 +171,17 @@ var ContainerSettingsPorts = React.createClass({
     return false;
   },
   handleChangeHostnameEnabled: function (e) {
-    var value = e.target.value;
+    var value = e.target.value.trim();
+    // RFC 1123 http://tools.ietf.org/html/rfc1123
+    var error = (
+        !value.match(/^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$/)
+        || value.length == 0
+        || value.length > 255
+    );
     this.setState({
-      hostname: value
+      hostname: value,
+      hostnameError: error ? 'Not a valid hostname.' : null,
+      isHostnameValid: !error
     });
   },
   handleSave: function () {
@@ -247,6 +257,9 @@ var ContainerSettingsPorts = React.createClass({
           <div className="container-info-row">
             <div className="label-hostname">HOSTNAME</div>
             <input id="hostname" className="line" type="text" disabled={isUpdating} value={this.state.hostname} onChange={this.handleChangeHostnameEnabled}/>
+            <span className="error">
+                {this.state.hostnameError}
+            </span>
           </div>
         </div>
         <div className="settings-section">
@@ -264,7 +277,7 @@ var ContainerSettingsPorts = React.createClass({
             </tbody>
           </table>
           <a className="btn btn-action"
-             disabled={isUpdating || !isValid}
+             disabled={isUpdating || !isValid || !this.state.isHostnameValid}
              onClick={this.handleSave}>
             Save
           </a>
